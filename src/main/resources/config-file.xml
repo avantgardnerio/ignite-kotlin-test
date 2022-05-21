@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <bean class="org.apache.ignite.configuration.IgniteConfiguration">
+        <property name="peerClassLoadingEnabled" value="true"/>
+        <property name="deploymentMode" value="CONTINUOUS"/>
+
+<!--        <property name="workDirectory" value="/path/to/work/directory"/>-->
+
+<!--        <property name="cacheConfiguration">-->
+<!--            <bean class="org.apache.ignite.configuration.CacheConfiguration">-->
+<!--                &lt;!&ndash; Set the cache name. &ndash;&gt;-->
+<!--                <property name="name" value="myCache"/>-->
+<!--                &lt;!&ndash; Set the cache mode. &ndash;&gt;-->
+<!--                <property name="cacheMode" value="PARTITIONED"/>-->
+<!--                &lt;!&ndash; Other cache parameters. &ndash;&gt;-->
+<!--            </bean>-->
+<!--        </property>-->
+    </bean>
+</beans>
