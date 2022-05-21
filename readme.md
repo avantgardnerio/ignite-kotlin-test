@@ -4,10 +4,10 @@ Prove we can connect to Apache Ignite using kotlin.
 
 ## Resources
 
-https://ignite.apache.org/docs/latest/quick-start/java
-https://ignite.apache.org/docs/latest/installation/installing-using-docker
-https://ignite.apache.org/docs/latest/code-deployment/peer-class-loading
-https://ignite.apache.org/docs/latest/understanding-configuration
+- https://ignite.apache.org/docs/latest/quick-start/java
+- https://ignite.apache.org/docs/latest/installation/installing-using-docker
+- https://ignite.apache.org/docs/latest/code-deployment/peer-class-loading
+- https://ignite.apache.org/docs/latest/understanding-configuration
 
 ## Example server output
 
