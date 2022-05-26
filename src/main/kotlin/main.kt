@@ -2,14 +2,18 @@ import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import org.apache.ignite.Ignite
 import org.apache.ignite.IgniteCache
 import org.apache.ignite.Ignition
+import org.apache.ignite.binary.BinaryObject
+import org.apache.ignite.cache.query.ScanQuery
 import org.apache.ignite.configuration.DeploymentMode
 import org.apache.ignite.configuration.IgniteConfiguration
+import org.apache.ignite.internal.binary.BinaryObjectImpl
 import org.apache.ignite.lang.IgniteRunnable
 import org.apache.ignite.resources.IgniteInstanceResource
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi
 import org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder
 import java.sql.DriverManager
 import java.util.*
+
 
 fun main() {
     // Register JDBC driver.
@@ -57,8 +61,24 @@ fun main() {
     for(name in ignite.cacheNames()) {
         println(name)
     }
-    val region = ignite.getOrCreateCache<Int, Object>("SQL_PUBLIC_REGION")
-    val res = region.get(0)
+    val region: IgniteCache<Int, BinaryObject> = ignite.cache<Int, BinaryObject>("SQL_PUBLIC_REGION").withKeepBinary()
+    val cursor = region.query(ScanQuery<Int, BinaryObject>())
+    for(entry in cursor) {
+        val key = entry.key
+        val res = entry.value
+        val type = res.type()!!
+        val typeName = type.typeName()
+        for(fieldName in type.fieldNames()) {
+            val fieldType = type.fieldTypeName(fieldName)
+            when (fieldType) {
+                "String" -> {
+                    val value = res.field<String>(fieldName)
+                    println("key=$key $typeName.$fieldName is $fieldType ($value)")
+                }
+                else -> println("Unknown type: $fieldType")
+            }
+        }
+    }
 
     // Create an IgniteCache and put some values in it.
     val cache = ignite.getOrCreateCache<Int, String>("myCache")
