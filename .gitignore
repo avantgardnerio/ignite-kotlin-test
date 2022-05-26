@@ -49,3 +49,6 @@ ignite/
 *.ipr
 *.iml
 *.iws
+
+# TPC-H
+data/

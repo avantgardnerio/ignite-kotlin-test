@@ -15,6 +15,7 @@ dependencies {
     testImplementation(kotlin("test"))
 
     implementation("org.apache.ignite:ignite-core:2.13.0")
+    implementation("com.github.doyaaaaaken:kotlin-csv-jvm:1.3.0")
 }
 
 tasks.test {
