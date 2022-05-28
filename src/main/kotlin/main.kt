@@ -3,20 +3,18 @@ import org.apache.ignite.Ignite
 import org.apache.ignite.IgniteCache
 import org.apache.ignite.Ignition
 import org.apache.ignite.binary.BinaryObject
-import org.apache.ignite.cache.query.ScanQuery
-import org.apache.ignite.configuration.DeploymentMode
-import org.apache.ignite.configuration.IgniteConfiguration
-import org.apache.ignite.internal.binary.BinaryObjectImpl
+import org.apache.ignite.configuration.CacheConfiguration
+import org.apache.ignite.configuration.ClientConfiguration
 import org.apache.ignite.lang.IgniteRunnable
 import org.apache.ignite.resources.IgniteInstanceResource
-import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi
-import org.apache.ignite.spi.discovery.tcp.ipfinder.multicast.TcpDiscoveryMulticastIpFinder
 import java.sql.DriverManager
 import java.util.*
 
 
+class BinConfig : CacheConfiguration<Int, BinaryObject>()
+
 fun main() {
-    // Register JDBC driver.
+    // -------------------------- JDBC ----------------------
     Class.forName("org.apache.ignite.IgniteJdbcThinDriver")
     val con = DriverManager.getConnection("jdbc:ignite:thin://127.0.0.1")
     val rs1 = con.createStatement().executeQuery("select 10")
@@ -47,51 +45,19 @@ fun main() {
             updateSales.execute()
         }
     }
-
-    val cfg = IgniteConfiguration()
-    cfg.isClientMode = true
-    cfg.isPeerClassLoadingEnabled = true
-    cfg.deploymentMode = DeploymentMode.CONTINUOUS;
-    val ipFinder = TcpDiscoveryMulticastIpFinder()
-    ipFinder.setAddresses(Collections.singletonList("127.0.0.1:47500..47509"))
-    cfg.discoverySpi = TcpDiscoverySpi().setIpFinder(ipFinder)
-    val ignite = Ignition.start(cfg)
-
-    // list caches
-    for(name in ignite.cacheNames()) {
-        println(name)
-    }
-    val region: IgniteCache<Int, BinaryObject> = ignite.cache<Int, BinaryObject>("SQL_PUBLIC_REGION").withKeepBinary()
-    val cursor = region.query(ScanQuery<Int, BinaryObject>())
-    for(entry in cursor) {
-        val key = entry.key
-        val res = entry.value
-        val type = res.type()!!
-        val typeName = type.typeName()
-        for(fieldName in type.fieldNames()) {
-            val fieldType = type.fieldTypeName(fieldName)
-            when (fieldType) {
-                "String" -> {
-                    val value = res.field<String>(fieldName)
-                    println("key=$key $typeName.$fieldName is $fieldType ($value)")
-                }
-                else -> println("Unknown type: $fieldType")
+    
+    // ----------- thin client
+    val cfg = ClientConfiguration().setAddresses("127.0.0.1:10800")
+    Ignition.startClient(cfg).use { client ->
+        val names = client.cacheNames()
+        for(name in names) {
+            println("cache: $name")
+            val cache = client.cache<Any, Any>(name)
+            for(entity in cache.configuration.queryEntities) {
+                println("entity: ${entity.tableName}")
             }
         }
     }
-
-    // Create an IgniteCache and put some values in it.
-    val cache = ignite.getOrCreateCache<Int, String>("myCache")
-    cache.put(1, "Hello")
-    cache.put(2, "World!")
-    println(">> Created the cache and add the values.")
-
-    // Executing custom Java compute task on server nodes.
-    ignite.compute(ignite.cluster().forServers()).broadcast(RemoteTask())
-    println(">> Compute task is executed, check for output on the server nodes.")
-
-    // Disconnect from the cluster.
-    ignite.close()
 }
 
 private class RemoteTask : IgniteRunnable {
