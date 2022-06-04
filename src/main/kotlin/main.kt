@@ -3,6 +3,7 @@ import org.apache.ignite.Ignite
 import org.apache.ignite.IgniteCache
 import org.apache.ignite.Ignition
 import org.apache.ignite.binary.BinaryObject
+import org.apache.ignite.cache.query.ScanQuery
 import org.apache.ignite.configuration.CacheConfiguration
 import org.apache.ignite.configuration.ClientConfiguration
 import org.apache.ignite.lang.IgniteRunnable
@@ -49,12 +50,29 @@ fun main() {
     // ----------- thin client
     val cfg = ClientConfiguration().setAddresses("127.0.0.1:10800")
     Ignition.startClient(cfg).use { client ->
+
+        val cache = client.getOrCreateCache<Int, String>("myCache")
+        cache.put(1, "Hello")
+        cache.put(2, "World!")
+
         val names = client.cacheNames()
         for(name in names) {
             println("cache: $name")
-            val cache = client.cache<Any, Any>(name)
+            if(name != "myCache") {
+                continue
+            }
+
+            val cache = client.cache<Int, String>(name)
             for(entity in cache.configuration.queryEntities) {
                 println("entity: ${entity.tableName}")
+            }
+
+            val query = ScanQuery<Int, String>()
+            cache.query(query).use { cursor ->
+                val records = cursor.all
+                for(entry in records) {
+                    println("${entry.key}=${entry.value}")
+                }
             }
         }
     }
